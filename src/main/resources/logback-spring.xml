@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    scan: 当此属性设置为true时，配置文件如果发生改变，将会被重新加载，默认值为true。
+    scanPeriod: 设置监测配置文件是否有修改的时间间隔，如果没有给出时间单位，默认单位是毫秒。当scan为true时，此属性生效。默认的时间间隔为1分钟。
+    debug: 当此属性设置为true时，将打印出logback内部日志信息，实时查看logback运行状态。默认值为false。
+    configuration 子节点为 appender、logger、root
+-->
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+
+    <!--    <property name="LOG_POLICE" value="file" />-->
+    <!-- 配置文件中配置日志路径以及日志等级 -->
+    <springProperty scope="context" name="logging.name" source="spring.application.name"/>
+    <springProperty scope="context" name="logging.level" source="logging.level.root"/>
+    <springProperty scope="context" name="logging.destination" source="logging.destination" defaultValue="file"/>
+    <springProperty scope="context" name="logging.maxHistory" source="logging.file.max-history"/>
+    <springProperty scope="context" name="logging.maxSize" source="logging.file.max-size" defaultValue="4MB"/>
+    <springProperty scope="context" name="logging.totalSizeCap" source="logging.file.total-size" defaultValue="200MB"/>
+    <springProperty scope="context" name="logging.level.nacos" source="logging.level.nacos" defaultValue="WARN"/>
+    <springProperty scope="context" name="logging.level.wutunan" source="logging.level.wutunan" defaultValue="INFO"/>
+    <springProperty scope="context" name="server.port" source="server.port" defaultValue="0000"/>
+
+    <!--日志文件所在目录，如果是tomcat，如下写法日志文件会在则为${TOMCAT_HOME}/bin/logs/目录下-->
+    <!--    <property name="LOG_HOME_WINDOWS" value="logs"/>-->
+    <!--   ../../../    在docker 容器里面遮这样写！ -->
+    <!--   ./logs/${logging.name}  表示当前的路径下  -->
+    <springProperty scope="context" name="logging.file.path" source="logging.file.path"
+                    defaultValue="../../../logs/${logging.name}"/>
+
+    <!-- 彩色日志 -->
+    <!-- 彩色日志依赖的渲染类 -->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex"
+                    converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+    <conversionRule conversionWord="wEx"
+                    converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+    <!-- 彩色日志格式   [%-5p] %d{yyyy-MM-dd HH:mm:ss,SSS} method:%l%n%m%n  -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+
+    <!--控制台-->
+    <appender name="LOG_STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <!--    用户手动配置的日志级别：  logging.level.root      -->
+            <level>${logging.level}</level>
+        </filter>
+        <encoder>
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度 %logger输出日志的logger名 %msg：日志消息，%n是换行符 -->
+            <!-- <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] %-5level %logger{36} : %msg%n</pattern>-->
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern><!--彩打日志-->
+            <!--解决乱码问题-->
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+    <appender name="LOG_STDOUT_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <!-- 如果队列的80%已满,则会丢弃TRACT、DEBUG、INFO级别的日志 -->
+        <discardingThreshold>0</discardingThreshold>
+        <!-- 不丢失日志的话，默认的队列长度是256 -->
+        <queueSize>256</queueSize>
+        <!-- 添加底层实际执行打印的appender -->
+        <appender-ref ref="LOG_STDOUT"/>
+    </appender>
+
+    <if condition='p("logging.destination").equals("file")'>
+        <then>
+            <!--滚动文件-->
+            <appender name="LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                    <level>${logging.level}</level>
+                </filter>
+                <file>${logging.file.path}/${logging.name}.log</file>
+                <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                    <fileNamePattern>${logging.file.path}/%d{yyyy-MM-dd}.%i{}_${logging.name}.log.zip</fileNamePattern>
+                    <!--保存最近30天的日志-->
+                    <maxHistory>${logging.maxHistory}</maxHistory>
+                    <!--单个日志文件最大100M，到了这个值，就会再创建一个日志文件，日志文件的名字最后+1-->
+                    <maxFileSize>${logging.maxSize}</maxFileSize>
+                    <!--所有的日志文件最大20G，超过就会删除旧的日志-->
+                    <totalSizeCap>${logging.totalSizeCap}</totalSizeCap>
+                    <cleanHistoryOnStart>true</cleanHistoryOnStart>
+                </rollingPolicy>
+                <encoder>
+                    <charset>UTF-8</charset>
+                    <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] %-5level %logger{36} : %msg%n</pattern>
+                </encoder>
+            </appender>
+            <appender name="LOG_FILE_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+                <discardingThreshold>0</discardingThreshold>
+                <queueSize>256</queueSize>
+                <appender-ref ref="LOG_FILE"/>
+            </appender>
+        </then>
+    </if>
+
+    <root level="${logging.level}" additivity="true">
+        <appender-ref ref="LOG_STDOUT_ASYNC"/>
+        <if condition='p("logging.destination").equals("file")'>
+            <then>
+                <appender-ref ref="LOG_FILE_ASYNC"/>
+            </then>
+        </if>
+    </root>
+
+    <logger name="org.springframework.boot.autoconfigure.logging" level="${logging.level}" additivity="false">
+        <appender-ref ref="LOG_STDOUT_ASYNC"/>
+        <if condition='p("logging.destination").equals("file")'>
+            <then>
+                <appender-ref ref="LOG_FILE_ASYNC"/>
+            </then>
+        </if>
+    </logger>
+
+    <logger name="com.alibaba.nacos.client" level="${logging.level.nacos}" additivity="true">
+        <appender-ref ref="LOG_STDOUT_ASYNC"/>
+        <if condition='p("logging.destination").equals("file")'>
+            <then>
+                <appender-ref ref="LOG_FILE_ASYNC"/>
+            </then>
+        </if>
+    </logger>
+
+    <logger name="com.alibaba.nacos.client.config" level="${logging.level.nacos}" additivity="true">
+        <appender-ref ref="LOG_STDOUT_ASYNC"/>
+        <if condition='p("logging.destination").equals("file")'>
+            <then>
+                <appender-ref ref="LOG_FILE_ASYNC"/>
+            </then>
+        </if>
+    </logger>
+
+    <logger name="com.alibaba.nacos.client.naming" level="${logging.level.nacos}" additivity="true">
+        <appender-ref ref="LOG_STDOUT_ASYNC"/>
+        <if condition='p("logging.destination").equals("file")'>
+            <then>
+                <appender-ref ref="LOG_FILE_ASYNC"/>
+            </then>
+        </if>
+    </logger>
+
+    <logger name="org.springframework.context.support.PostProcessorRegistrationDelegate" level="${logging.level.nacos}"
+            additivity="true">
+        <appender-ref ref="LOG_STDOUT_ASYNC"/>
+        <if condition='p("logging.destination").equals("file")'>
+            <then>
+                <appender-ref ref="LOG_FILE_ASYNC"/>
+            </then>
+        </if>
+    </logger>
+
+    <!--    <logger name="com.alibaba" level="${logging.level.nacos}" additivity="true">-->
+    <!--        <appender-ref ref="LOG_STDOUT_ASYNC" />-->
+    <!--        <if condition='p("logging.destination").equals("file")'>-->
+    <!--            <then>-->
+    <!--                <appender-ref ref="LOG_FILE_ASYNC" />-->
+    <!--            </then>-->
+    <!--        </if>-->
+    <!--    </logger>-->
+
+    <!--    <logger name="cn.csdas" level="${logging.level.das}" additivity="true">-->
+    <!--        <appender-ref ref="LOG_STDOUT_ASYNC" />-->
+    <!--        <if condition='p("logging.destination").equals("file")'>-->
+    <!--            <then>-->
+    <!--                <appender-ref ref="LOG_FILE_ASYNC" />-->
+    <!--            </then>-->
+    <!--        </if>-->
+    <!--    </logger>-->
+
+    <!--    <logger name="cn.das" level="${logging.level.das}" additivity="true">-->
+    <!--        <appender-ref ref="LOG_STDOUT_ASYNC" />-->
+    <!--        <if condition='p("logging.destination").equals("file")'>-->
+    <!--            <then>-->
+    <!--                <appender-ref ref="LOG_FILE_ASYNC" />-->
+    <!--            </then>-->
+    <!--        </if>-->
+    <!--    </logger>-->
+
+    <!--    <logger name="com.alibaba.nacos.client.config" level="${logging.level}" additivity="true">-->
+    <!--        <appender-ref ref="LOG_STDOUT_ASYNC" />-->
+    <!--        <if condition='p("logging.destination").equals("file")'>-->
+    <!--            <then>-->
+    <!--                <appender-ref ref="LOG_FILE_ASYNC" />-->
+    <!--            </then>-->
+    <!--        </if>-->
+    <!--    </logger>-->
+
+</configuration>
