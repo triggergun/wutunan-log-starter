@@ -2,9 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>top.wutunan</groupId>
+    <groupId>top.wutunan.www</groupId>
     <artifactId>wutunan-log-starter</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
     <name>wutunan-log-starter</name>
     <description>wutunan-log-starter</description>
     <!-- 不用修改直接使用,开源协议!  -->
