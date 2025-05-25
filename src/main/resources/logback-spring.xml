@@ -12,7 +12,7 @@
     <springProperty scope="context" name="logging.name" source="spring.application.name"/>
     <springProperty scope="context" name="logging.level" source="logging.level.root"/>
     <springProperty scope="context" name="logging.destination" source="logging.destination" defaultValue="file"/>
-    <springProperty scope="context" name="logging.maxHistory" source="logging.file.max-history"/>
+    <springProperty scope="context" name="logging.maxHistory" source="logging.file.max-history"  defaultValue="30"/>
     <springProperty scope="context" name="logging.maxSize" source="logging.file.max-size" defaultValue="4MB"/>
     <springProperty scope="context" name="logging.totalSizeCap" source="logging.file.total-size" defaultValue="200MB"/>
     <springProperty scope="context" name="logging.level.nacos" source="logging.level.nacos" defaultValue="WARN"/>

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>top.wutunan.www</groupId>
     <artifactId>wutunan-log-starter</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <name>wutunan-log-starter</name>
     <description>wutunan-log-starter</description>
     <!-- 不用修改直接使用,开源协议!  -->
